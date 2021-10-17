@@ -1,0 +1,75 @@
+﻿<Window x:Class="ACPaints.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ACPaints"
+        mc:Ignorable="d"
+        Title="ARC Assetto Corsa Paints" Height="450" Width="800">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <ScrollViewer
+            x:Name="TextScrollViewer"
+            Grid.Row="0"
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch">
+            <TextBox
+                Grid.Row="0"
+                VerticalAlignment="Stretch"
+                HorizontalAlignment="Stretch"
+                IsReadOnly="True"
+                Text="{Binding DetailText}"
+                TextWrapping="Wrap"
+                />
+        </ScrollViewer>
+        
+
+        <Button 
+            Grid.Row="1" 
+            Click="DownloadButtonClick"
+            Visibility="{Binding DownloadButtonVisible, Converter={StaticResource BooleanToVisibilityConverter}}"
+            IsEnabled="{Binding DownloadButtonEnabled}">
+            Install missing skins
+        </Button>
+
+        <StackPanel 
+            Grid.Row="2"
+            Orientation="Horizontal"
+            HorizontalAlignment="Stretch">
+            <Button
+                Click="UpdateFolderClick"
+                Margin="0, 4, 4, 4"
+                Padding="8, 0">
+                Update Assetto Corsa install path
+            </Button>
+            <Button
+                Click="RefreshClick"
+                Margin="4"
+                Padding="8, 0">
+                Refresh
+            </Button>
+        </StackPanel>
+        <StackPanel 
+            Grid.Row="3"
+            Orientation="Horizontal"
+            HorizontalAlignment="Stretch">
+            <ProgressBar
+                Width="300px"
+                HorizontalAlignment="Stretch"
+                Value="{Binding Progress}"/>
+            <TextBlock
+                Margin="8,0"
+                Text="{Binding Status}"
+                HorizontalAlignment="Right"/>
+        </StackPanel>
+    </Grid>
+</Window>
