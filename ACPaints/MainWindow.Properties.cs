@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Windows;
+﻿using System.Windows;
 
 namespace ACPaints
 {
@@ -17,8 +14,6 @@ namespace ACPaints
         public static readonly DependencyProperty StatusProperty =
             DependencyProperty.Register("Status", typeof(string), typeof(MainWindow), new PropertyMetadata(""));
 
-
-
         public int Progress
         {
             get { return (int)GetValue(ProgressProperty); }
@@ -28,8 +23,6 @@ namespace ACPaints
         // Using a DependencyProperty as the backing store for Progress.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty ProgressProperty =
             DependencyProperty.Register("Progress", typeof(int), typeof(MainWindow), new PropertyMetadata(0));
-
-
 
         public string DetailText
         {
@@ -41,8 +34,6 @@ namespace ACPaints
         public static readonly DependencyProperty DetailTextProperty =
             DependencyProperty.Register("DetailText", typeof(string), typeof(MainWindow), new PropertyMetadata(""));
 
-
-
         public bool DownloadButtonVisible
         {
             get { return (bool)GetValue(DownloadButtonVisibleProperty); }
@@ -52,8 +43,6 @@ namespace ACPaints
         // Using a DependencyProperty as the backing store for DownloadButtonVisible.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty DownloadButtonVisibleProperty =
             DependencyProperty.Register("DownloadButtonVisible", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
-
-
 
         public bool DownloadButtonEnabled
         {
@@ -65,6 +54,14 @@ namespace ACPaints
         public static readonly DependencyProperty DownloadButtonEnabledProperty =
             DependencyProperty.Register("DownloadButtonEnabled", typeof(bool), typeof(MainWindow), new PropertyMetadata(true));
 
+        public bool IsProgressIndeterminate
+        {
+            get { return (bool)GetValue(IsProgressIndeterminateProperty); }
+            set { SetValue(IsProgressIndeterminateProperty, value); }
+        }
 
+        // Using a DependencyProperty as the backing store for IsProgressIndeterminate.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty IsProgressIndeterminateProperty =
+            DependencyProperty.Register("IsProgressIndeterminate", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
     }
 }

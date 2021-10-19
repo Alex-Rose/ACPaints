@@ -15,6 +15,7 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <ScrollViewer
@@ -52,19 +53,45 @@
                 Update Assetto Corsa install path
             </Button>
             <Button
+                Click="VerifyFileIntegrityClicked"
+                Margin="4"
+                Padding="8, 0">
+                Verify file integrity
+            </Button>
+            <Button
+                Click="MakeSkinClicked"
+                Margin="4"
+                Padding="8, 0"
+                Visibility="Collapsed">
+                Make skin config
+            </Button>
+            <Button
                 Click="RefreshClick"
                 Margin="4"
                 Padding="8, 0">
                 Refresh
             </Button>
         </StackPanel>
-        <StackPanel 
+        <StackPanel
             Grid.Row="3"
+            Orientation="Horizontal"
+            HorizontalAlignment="Stretch">
+            <Button
+                Click="GenerateRemoteConfigTemplateClick"
+                Margin="4"
+                Padding="8, 0"
+                Visibility="Collapsed">
+                Generate empty config
+            </Button>
+        </StackPanel>
+        <StackPanel 
+            Grid.Row="4"
             Orientation="Horizontal"
             HorizontalAlignment="Stretch">
             <ProgressBar
                 Width="300px"
                 HorizontalAlignment="Stretch"
+                IsIndeterminate="{Binding IsProgressIndeterminate}"
                 Value="{Binding Progress}"/>
             <TextBlock
                 Margin="8,0"

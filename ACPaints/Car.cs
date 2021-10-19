@@ -1,18 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace ACPaints
 {
     class Car
     {
+        public struct FileVerificationProgressChangedEventArgs
+        {
+            public string Message { get; set; }
+
+            public int FilesVerified { get; set; }
+
+            public int TotalFilesToVerify { get; set; }
+        }
+
         public string Path { get; private set; }
+
         public string Name { get; private set; }
 
         public string SkinsFolder { get; private set; }
+
+        public delegate void FileVerificationProgressChangedHandler(object sender, FileVerificationProgressChangedEventArgs e);
+        public event FileVerificationProgressChangedHandler FileVerificationProgressChanged;
+
+        private Dictionary<string, string> m_fileHashes = new Dictionary<string, string>();
 
         public static Car MakeCar(string path)
         {
@@ -27,7 +40,7 @@ namespace ACPaints
         private Car(string path)
         {
             Path = path;
-            Name = System.IO.Path.GetDirectoryName(path);
+            Name = System.IO.Path.GetFileName(path);
             SkinsFolder = System.IO.Path.Combine(new string[] { Path, "skins" });
         }
 
@@ -38,20 +51,59 @@ namespace ACPaints
 
         public async Task<Dictionary<string, string>> GetSkinHashes(string name)
         {
+            return await Utils.GetFileHashesInDirectory(System.IO.Path.Combine(new string[] { SkinsFolder, name }));
+        }
+
+        public async Task<bool> CompareSkinHashes(string name, Dictionary<string, string> newHashes)
+        {
+            var oldHashes = await GetSkinHashes(name);
+
+            if (oldHashes.Count != newHashes.Count)
+            {
+                FileVerificationProgressChanged?.Invoke(this, new FileVerificationProgressChangedEventArgs()
+                {
+                    Message = $"Different number of files, need to re-download {name}"
+                });
+                return false;
+            }
+
             return await Task.Run(() =>
             {
-                var directoryInfo = new DirectoryInfo(System.IO.Path.Combine(new string[] { SkinsFolder, name }));
-                var hashes = new Dictionary<string, string>();
-                var sha1 = SHA1.Create();
-
-                foreach (var file in directoryInfo.GetFiles("*", SearchOption.AllDirectories))
+                int i = 1;
+                foreach (var kvp in newHashes)
                 {
-                    byte[] hash = sha1.ComputeHash(File.ReadAllBytes(file.FullName));
-                    string hashString = BitConverter.ToString(hash).Replace("-", "");
-                    hashes.Add(file.FullName, hashString);
+                    if (oldHashes.TryGetValue(kvp.Key, out string hash))
+                    {
+                        if (string.Compare(kvp.Value, hash, StringComparison.OrdinalIgnoreCase) != 0)
+                        {
+                            FileVerificationProgressChanged?.Invoke(this, new FileVerificationProgressChangedEventArgs()
+                            {
+                                Message = $"MISMATCH {kvp.Key} old:{hash} new:{kvp.Value}",
+                                FilesVerified = i++,
+                                TotalFilesToVerify = newHashes.Count
+                            });
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        FileVerificationProgressChanged?.Invoke(this, new FileVerificationProgressChangedEventArgs()
+                        {
+                            Message = $"{kvp.Key}: is missing",
+                            FilesVerified = i++,
+                            TotalFilesToVerify = newHashes.Count
+                        });
+                        return false;
+                    }
+
+                    FileVerificationProgressChanged?.Invoke(this, new FileVerificationProgressChangedEventArgs()
+                    {
+                        FilesVerified = i++,
+                        TotalFilesToVerify = newHashes.Count
+                    });
                 }
 
-                return hashes;
+                return true;
             });
         }
     }

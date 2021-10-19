@@ -1,11 +1,46 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace ACPaints
 {
     static class Utils
     {
+        public static async Task<Dictionary<string, string>> GetFileHashesInDirectory(string directory)
+        {
+            return await Task.Run(() =>
+            {
+                var directoryInfo = new DirectoryInfo(directory);
+                var hashes = new Dictionary<string, string>();
+                var sha1 = SHA1.Create();
+
+                foreach (var file in directoryInfo.GetFiles("*", SearchOption.AllDirectories))
+                {
+                    byte[] hash = sha1.ComputeHash(File.ReadAllBytes(file.FullName));
+                    string hashString = BitConverter.ToString(hash).Replace("-", "");
+                    hashes.Add(file.Name, hashString);
+                }
+
+                return hashes;
+            });
+        }
+
+        public static bool TryDeleteFile(string file)
+        {
+            try
+            {
+                File.Delete(file);
+                return true;
+            }
+            catch 
+            {
+                // best effort.
+                return false;
+            } 
+        }
+
         // Returns the human-readable file size for an arbitrary, 64-bit file size 
         // The default format is "0.### XB", e.g. "4.2 KB" or "1.434 GB"
         // https://www.somacon.com/p576.php

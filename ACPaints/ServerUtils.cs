@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -10,12 +9,13 @@ namespace ACPaints
 {
     class ServerUtils
     {
-        private static readonly string c_skinList = "https://assetto-corsa.abbcbba.com/ACF1/skins.txt";
+        private static readonly string c_skinList = $"{AppConfig.ServerBaseUrl}/skins.txt";
+        private static readonly string c_config = $"{AppConfig.ServerBaseUrl}/config.json";
+        private static readonly string c_userAgent = $"ACPaints {typeof(ServerUtils).Assembly.GetName().Version}";
 
         private WebClient m_webClient = new WebClient();
         private bool m_running = false;
         private object m_lock = new object();
-
 
         public delegate void DownloadProgressChangedHandler(object sender, DownloadProgressChangedEventArgs e);
         public event DownloadProgressChangedHandler DownloadProgressChanged;
@@ -25,6 +25,7 @@ namespace ACPaints
 
         public ServerUtils()
         {
+            m_webClient.Headers.Set("user-agent", c_userAgent);
             m_webClient.DownloadProgressChanged += OnProgressChanged;
             m_webClient.DownloadFileCompleted += OnDowloadCompleted;
         }
@@ -35,7 +36,9 @@ namespace ACPaints
             {
                 try
                 {
-                    var responseStream = WebRequest.Create(c_skinList).GetResponse().GetResponseStream();
+                    var req = WebRequest.Create(c_skinList);
+                    req.Headers.Add("user-agent", c_userAgent);
+                    var responseStream = req.GetResponse().GetResponseStream();
                     string listString = null;
                     using (var r = new StreamReader(responseStream))
                     {
@@ -46,13 +49,45 @@ namespace ACPaints
                     {
                         var options = new JsonSerializerOptions();
                         options.AllowTrailingCommas = true;
-                        var list = JsonSerializer.Deserialize(listString, typeof(Dictionary<string, string>), options) as Dictionary<string, string>;
+                        var list = JsonSerializer.Deserialize<Dictionary<string, string>>(listString, options);
                         return list;
                     }
                 }
                 catch (Exception e)
                 {
                     await File.AppendAllLinesAsync("log.txt", new string[] { $"[{DateTime.Now}] ERROR - Failed to download or parse skin list {e.Message}" });
+                }
+
+                return null;
+            });
+        }
+
+        public async Task<RemoteConfig> DownloadRemoteConfig()
+        {
+            return await Task.Run(async () =>
+            {
+                try
+                {
+                    var req = WebRequest.Create(c_config);
+                    req.Headers.Add("user-agent", c_userAgent);
+                    var responseStream = req.GetResponse().GetResponseStream();
+                    string configString = null;
+                    using (var r = new StreamReader(responseStream))
+                    {
+                        configString = r.ReadToEnd();
+                    }
+
+                    if (configString != null)
+                    {
+                        var options = new JsonSerializerOptions();
+                        options.AllowTrailingCommas = true;
+                        var config = JsonSerializer.Deserialize<RemoteConfig>(configString, options);
+                        return config;
+                    }
+                }
+                catch (Exception e)
+                {
+                    await File.AppendAllLinesAsync("log.txt", new string[] { $"[{DateTime.Now}] ERROR - Failed to download or parse remote config {e.Message}" });
                 }
 
                 return null;
@@ -72,6 +107,53 @@ namespace ACPaints
                 m_webClient.DownloadFileAsync(new Uri(url), tempFile);
                 return tempFile;
             }
+        }
+
+        public static RemoteConfig CreateSampleRemoteConfig()
+        {
+            return new RemoteConfig()
+            {
+                Version = 1,
+                Series = new List<string>() { "ACF1" },
+                Cars = new List<RemoteCar>()
+                {
+                    new RemoteCar()
+                    {
+                        Name = "rss_formula_hybrid_2021",
+                        Skins = new List<RemoteSkin>()
+                        {
+                            new RemoteSkin()
+                            {
+                                Name = "19_Microsoft",
+                                FileHashes = new Dictionary<string, string>(),
+                                Url = "https://example.com"
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        public static async Task<RemoteCar> CreateRemoteCarConfigForLocalFiles(Car localCar, IEnumerable<string> skinsToAdd)
+        {
+            var remoteCar = new RemoteCar()
+            {
+                Name = localCar.Name,
+                Series = new List<string>(),
+                Skins = new List<RemoteSkin>()
+            };
+
+            foreach (var skin in skinsToAdd)
+            {
+                remoteCar.Skins.Add(new RemoteSkin()
+                { 
+                    Name = skin,
+                    Url = $"{AppConfig.ServerBaseUrl}/{Uri.EscapeDataString(skin)}.7z",
+                    FileHashes = await localCar.GetSkinHashes(skin)
+                });
+            }
+
+            return remoteCar;
         }
 
         private void OnDowloadCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
