@@ -36,6 +36,26 @@ function authenticateToken(req, res, next) {
   })
 }
 
+function getIndexOfCar(serverConfig, name, createIfNecessary = true) {
+  for (const i in serverConfig.Cars) {
+    if (serverConfig.Cars[i].Name == name) {
+      return i;
+    }
+  }
+
+  if (createIfNecessary) {
+    let newCar = {
+      Name: name,
+      Series: [],
+      Skins: []
+    }
+    serverConfig.Cars.push(newCar);
+    return serverConfig.Cars.length - 1;
+  }
+
+  return -1;
+}
+
 app.route('/manage/getToken').post(async (req, res) => {
   let auth = req.body;
   if (!auth || !auth.username || !auth.password) {
@@ -69,18 +89,22 @@ app.route('/manage/getToken').post(async (req, res) => {
   res.status(400).send();
 });
 
-app.post('/manage/archive', authenticateToken, upload.single('file'), function (req, res, next) {
+app.post('/manage/archive/:carName', authenticateToken, upload.single('file'), function (req, res, next) {
   if (!req.file) {
     next();
     return;
   }
 
   console.log(`Receiving ${req.file.originalname}`);
-  const destPath = `${req.file.destination}/${req.file.originalname}`;
+  const carName = req.params.carName
+  const destPath = `${req.file.destination}/${carName}/${req.file.originalname}`;
+  const destFolder = `${req.file.destination}/${carName}/`;
 
-  if (IsSubpathOf(config.uploadPath, destPath) === true // Only in the upload path
-      && path.dirname(destPath) === config.uploadPath // No subdir
-    ) {
+  if (!fs.existsSync(destFolder)) {
+    fs.mkdirSync(destFolder);
+  }
+
+  if (IsSubpathOf(config.uploadPath, destPath) === true) { // Only in the upload path
       fs.rename(req.file.path, destPath, () => {
         res.status(200).send();
       });
@@ -89,8 +113,9 @@ app.post('/manage/archive', authenticateToken, upload.single('file'), function (
   }
 });
 
-app.route('/manage/config').post(authenticateToken, (req, res) => {
-  let newSkin = req.body;
+app.route('/manage/config/:carName').post(authenticateToken, (req, res) => {
+  const newSkin = req.body;
+  const carName = req.params.carName
 
   if (!newSkin || !newSkin.Name || !newSkin.Url || !newSkin.FileHashes) {
     res.status(400).send();
@@ -99,22 +124,24 @@ app.route('/manage/config').post(authenticateToken, (req, res) => {
   const configFilePath = `${config.uploadPath}/config.json`;
   let serverConfig = JSON.parse(fs.readFileSync(configFilePath));
 
-  for (let i in serverConfig.Cars) {
-    if (serverConfig.Cars[i].Name == 'rss_formula_hybrid_2021') {
-      let found = false;
-      for (let j in serverConfig.Cars[i].Skins) {
-        if (serverConfig.Cars[i].Skins[j].Name == newSkin.Name) {
-          found = true;
-          serverConfig.Cars[i].Skins[j] = newSkin;
-          break;
-        }
-      }
+  const i = getIndexOfCar(serverConfig, carName);
 
-      if (!found) {
-        serverConfig.Cars[i].Skins.push(newSkin);
-      }
+  if (i == -1) {
+    res.status(404).send('Car not found');
+    return;
+  }
+
+  let found = false;
+  for (let j in serverConfig.Cars[i].Skins) {
+    if (serverConfig.Cars[i].Skins[j].Name == newSkin.Name) {
+      found = true;
+      serverConfig.Cars[i].Skins[j] = newSkin;
       break;
     }
+  }
+
+  if (!found) {
+    serverConfig.Cars[i].Skins.push(newSkin);
   }
 
   fs.writeFileSync(configFilePath, JSON.stringify(serverConfig, null, 2));

@@ -1,6 +1,6 @@
 {
   "name": "acpaintsserver",
-  "version": "0.1.2",
+  "version": "0.3.1",
   "description": "ACPaints server",
   "main": "index.js",
   "scripts": {
