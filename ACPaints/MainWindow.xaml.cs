@@ -36,7 +36,6 @@ namespace ACPaints
             DataContext = this;
             _ = Initialize();
         }
-
         private async Task Initialize()
         {
             await AddOutputLine("Initializing", true);
@@ -55,9 +54,18 @@ namespace ACPaints
 
             m_serverUtils.DownloadCompleted += OnDownloadCompleted;
             m_serverUtils.DownloadProgressChanged += OnProgressChanged;
+            m_serverUtils.UploadCompleted += OnDownloadCompleted;
+            m_serverUtils.UploadProgressChanged += OnProgressChanged;
+            this.Closing += OnWindowClosing;
 
+            LoadLocalConfig();
             await DownloadRemoteConfig();
             await VerifyAllSkinsExist();
+        }
+
+        private void OnWindowClosing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            LocalConfig.Save();
         }
 
         private async Task DownloadRemoteConfig()
@@ -162,6 +170,15 @@ namespace ACPaints
         {
             Progress = e.ProgressPercentage;
             Status = $"{m_currentSkinDownload} {e.ProgressPercentage} ({Utils.GetBytesReadable(e.BytesReceived)} / {Utils.GetBytesReadable(e.TotalBytesToReceive)}";
+        }
+
+        private void OnProgressChanged(object sender, System.Net.UploadProgressChangedEventArgs e)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                Progress = e.ProgressPercentage;
+                Status = $"Uploading {e.ProgressPercentage} ({Utils.GetBytesReadable(e.BytesSent)})";
+            });
         }
 
         private void OnDownloadCompleted(object sender, System.ComponentModel.AsyncCompletedEventArgs e)
@@ -321,6 +338,7 @@ namespace ACPaints
 
         private async void RefreshClick(object sender, RoutedEventArgs e)
         {
+            await DownloadRemoteConfig();
             await VerifyAllSkinsExist();
         }
 
@@ -357,10 +375,33 @@ namespace ACPaints
             var dialog = new Ookii.Dialogs.Wpf.VistaFolderBrowserDialog();
             if (dialog.ShowDialog() == true)
             {
-                var skin = await RemoteSkin.GenerateForFolder(dialog.SelectedPath);
+                var skin = await RemoteSkin.GenerateForFolder(dialog.SelectedPath, "rss_formula_hybrid_2021");
                 var options = new System.Text.Json.JsonSerializerOptions() { AllowTrailingCommas = true, WriteIndented = true };
                 await AddOutputLine(System.Text.Json.JsonSerializer.Serialize(skin, options), false);
             }
+        }
+
+        private void LoadLocalConfig()
+        {
+            IsAdmin = LocalConfig.Instance.Admin;
+            IsDebug = LocalConfig.Instance.Debug;
+        }
+
+        private async void UploadSkinButtonClicked(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrEmpty(LocalConfig.Instance.Username) || string.IsNullOrEmpty(LocalConfig.Instance.Password))
+            {
+                var credWindow = new CredentialWindow();
+                if (credWindow.ShowDialog() != true)
+                {
+                    await AddOutputLine("No credentials provided", true);
+                    return;
+                }
+            }
+
+            var uploadWindow = new UploadSkinWindow(m_serverUtils);
+            uploadWindow.ShowDialog();
+           
         }
     }
 }

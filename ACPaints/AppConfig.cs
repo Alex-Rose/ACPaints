@@ -10,7 +10,7 @@ namespace ACPaints
         {
             get
             {
-                return "https://assetto-corsa.abbcbba.com/ACF1";
+                return "https://assetto-corsa.abbcbba.com";
             }
         }
     }

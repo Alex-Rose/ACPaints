@@ -62,7 +62,7 @@
                 Click="MakeSkinClicked"
                 Margin="4"
                 Padding="8, 0"
-                Visibility="Collapsed">
+                Visibility="{Binding IsDebug, Converter={StaticResource BooleanToVisibilityConverter}}">
                 Make skin config
             </Button>
             <Button
@@ -70,6 +70,13 @@
                 Margin="4"
                 Padding="8, 0">
                 Refresh
+            </Button>
+            <Button
+                Click="UploadSkinButtonClicked"
+                Margin="4"
+                Padding="8, 0"
+                Visibility="{Binding IsAdmin, Converter={StaticResource BooleanToVisibilityConverter}}">
+                Upload new skin
             </Button>
         </StackPanel>
         <StackPanel

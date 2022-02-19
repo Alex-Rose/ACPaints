@@ -63,5 +63,26 @@ namespace ACPaints
         // Using a DependencyProperty as the backing store for IsProgressIndeterminate.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty IsProgressIndeterminateProperty =
             DependencyProperty.Register("IsProgressIndeterminate", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
+
+        public bool IsDebug
+        {
+            get { return (bool)GetValue(IsDebugProperty); }
+            set { SetValue(IsDebugProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for IsDebug.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty IsDebugProperty =
+            DependencyProperty.Register("IsDebug", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
+
+        public bool IsAdmin
+        {
+            get { return (bool)GetValue(IsAdminProperty); }
+            set { SetValue(IsAdminProperty, value); }
+        }
+
+        // Using a DependencyProperty as the backing store for IsAdmin.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty IsAdminProperty =
+            DependencyProperty.Register("IsAdmin", typeof(bool), typeof(MainWindow), new PropertyMetadata(false));
+
     }
 }

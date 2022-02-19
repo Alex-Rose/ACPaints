@@ -5,13 +5,13 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>ApolloLogored.ico</ApplicationIcon>
-    <AssemblyVersion>0.1.1.0</AssemblyVersion>
-    <FileVersion>0.1.1.0</FileVersion>
+    <AssemblyVersion>0.3.1.0</AssemblyVersion>
+    <FileVersion>0.2.1.0</FileVersion>
     <PackageIcon>ApolloLogored.png</PackageIcon>
-    <SignAssembly>true</SignAssembly>
+    <SignAssembly>false</SignAssembly>
     <DelaySign>false</DelaySign>
     <AssemblyOriginatorKeyFile>ARC_ACPaints.pfx</AssemblyOriginatorKeyFile>
-    <Version>0.1.1</Version>
+    <Version>0.3.1</Version>
     <Authors>Alex Rose</Authors>
     <PackageProjectUrl>https://github.com/Alex-Rose/ACPaints</PackageProjectUrl>
   </PropertyGroup>
